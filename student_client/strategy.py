@@ -29,6 +29,9 @@ class Strategy(ABC):
     def on_tick(self, ctx: Context) -> None:
         """Optional hook called about every second once history has been replayed."""
 
+    def on_reset(self, ctx: Context) -> None:
+        """Clear planned actions after a live team reset; ctx.state is already reset. Do not send commands here."""
+
 
 class StudentStrategy(Strategy):
     def on_live(self, ctx: Context) -> None:

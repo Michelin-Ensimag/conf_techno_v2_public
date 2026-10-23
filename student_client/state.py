@@ -149,6 +149,9 @@ class GameState:
         elif isinstance(fact, RecipeCompleted):
             self._apply_recipe(fact)
         elif isinstance(fact, ScoreUpdated):
+            if fact.content.reset:
+                self.trucks.clear()
+                self.stock.clear()
             self._balance = fact.content.balance
             self.reputation = fact.content.reputation
         elif isinstance(fact, CommandRejected):

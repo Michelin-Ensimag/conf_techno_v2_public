@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from student_client.config import Settings
 from student_client.kafka_io import FactsConsumer
-from student_client.models import Command, Fact, FactMessage, Ping, PingContent, Pong
+from student_client.models import Command, Fact, FactMessage, Ping, PingContent, Pong, ScoreUpdated
 from student_client.security import Identity, is_signed_envelope
 from student_client.state import GameState
 from student_client.strategy import Context, Strategy
@@ -118,6 +118,9 @@ class GameClient:
             return
         self.state.apply(message.fact)
         if self.live:
+            if isinstance(message.fact, ScoreUpdated) and message.fact.content.reset:
+                self._batch.clear()
+                self._call_strategy(lambda: self.strategy.on_reset(self._ctx))
             self._batch.append(message.fact)
 
     @staticmethod

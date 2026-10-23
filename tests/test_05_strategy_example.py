@@ -14,6 +14,7 @@ from student_client.models import (
     Command,
     Fact,
     OfferChanged,
+    ScoreUpdated,
     WorldContent,
     WorldSnapshot,
 )
@@ -41,6 +42,9 @@ class ExampleStrategy(Strategy):
     def on_tick(self, ctx: Context) -> None:
         self._buy_first_truck(ctx)
 
+    def on_reset(self, ctx: Context) -> None:
+        self._purchase_pending = False
+
     def _buy_first_truck(self, ctx: Context) -> None:
         if not ctx.state.world_known or ctx.state.trucks or self._purchase_pending:
             return
@@ -61,6 +65,27 @@ def test_requests_a_truck_without_changing_the_game_state(state: GameState) -> N
     assert sent == [BuyTruck(type="buy_truck", content=BuyTruckContent(model_code="small"))]
     assert state.trucks == {}, "Sending an order does not confirm the purchase."
     assert state.balance == 100, "Only a later fact may update the balance."
+
+
+def test_reset_forgets_the_pending_purchase_and_allows_a_fresh_start(state: GameState) -> None:
+    sent: list[Command] = []
+    context = Context(state=state, send=sent.append, now=lambda: 0.0)
+    strategy = ExampleStrategy()
+    strategy.on_live(context)
+    reset = ScoreUpdated.model_validate({
+        "type": "score_updated",
+        "content": {
+            "reason": "team reset by an organizer", "money_delta": 0,
+            "reputation_delta": 0, "balance": 100, "reputation": 0, "reset": True,
+        },
+    })
+
+    state.apply(reset)
+    strategy.on_reset(context)
+    assert len(sent) == 1, "The reset hook only clears decisions; it must not send commands."
+    strategy.on_facts(context, [reset])
+
+    assert len(sent) == 2
 
 
 @pytest.mark.parametrize("balance, expected_orders", [(9, 0), (10, 1), (11, 1)])

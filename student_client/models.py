@@ -181,6 +181,7 @@ class ScoreUpdatedContent(Payload):
     reputation_delta: int
     balance: int
     reputation: int
+    reset: bool = False
 
 
 class ScoreUpdated(Payload):

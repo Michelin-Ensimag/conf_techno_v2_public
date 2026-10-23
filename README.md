@@ -203,6 +203,19 @@ Ne renvoyez pas la même commande à chaque appel de votre stratégie.
 Un camion porte un seul type de ressource à la fois, dans la limite de sa capacité.
 Gardez assez d'argent pour les matières et la fabrication : n'achetez pas trop de camions d'un coup.
 
+### Si l'encadrant remet votre équipe à zéro
+
+Le serveur envoie `score_updated` avec `reset: true`.
+Le client efface vos camions et stocks, puis applique les nouveaux scores.
+Les lieux, prix et recettes restent connus.
+
+Si votre stratégie garde des actions en attente, redéfinissez `on_reset(ctx)`
+pour les oublier. N'envoyez pas de commande dans cette méthode :
+`on_facts` reçoit ensuite le reset et les faits suivants.
+
+L'historique Kafka est conservé. Au redémarrage, le client le relit et applique
+le reset avant les nouveaux achats. La stratégie démarre après cette lecture.
+
 ### Tester et lancer
 
 #### Tester une décision sans Kafka
